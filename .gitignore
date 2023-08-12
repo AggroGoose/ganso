@@ -1,2 +1,3 @@
 project
 *.code-workspace
+Makefile
