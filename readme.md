@@ -4,13 +4,10 @@ As I've learned more about the Go Language and the value that a backend server c
 
 ## Services
 
-Starting out this project, I will have four main services that can be expanded on later:
-
-- **Broker Service** - This service will be the entry point for the app and will determine where incoming requests need to be directed.
-- **Database Service** - This service will be the core of the application and could likely be split into separate services down the line but for the time being it will handle any functionality that interacts with the DB such as managing additional post data (audio files, etc.) post events (comments, reactions, saves) and user events (user settings, etc.)
-- **Ghost Service** - This service will handle interactions to/from the Ghost CMS and parsing the data. Having a separate service is useful in case I decide to switch CMS or build my own CMS.
-- **Webhook Service** - The webhook service will be used to handle webhooks sent from GhostCMS when posts, tags or pages are created/updated/deleted
+Initially this project would have been broken into 4 services (5 including the DB) but after some consideration I decided to stick with one core service where the bulk of the app would be built, but leave the door open for additional services or splitting into multiple services at a later date. This core app will handle interface with external requests, DB Processing, and webhooks.
 
 ## Lessons Learned
 
-To be added as I build the project.
+- While learning about gRPC and other ways of making microservices communicate together, I realized at current scale of the project that a microservices architecture might be less performant than a more centralized single app. I will leave the door open for microservices as the application grows but at present time it may have more pitfalls than not.
+- Also learned that before I can implement integration with GhostCMS I will need more proficiency with JWT WebTokens as that's the preferred connection method with the GhostCMS Admin API. For the meantime I will keep that application within the Next.JS Application running the website.
+- Found that I favored the 'OOP' model for the Server and DB Queries that I learned in the 'Simple-Bank' project. Refactored router from **[Go-Chi](https://github.com/go-chi/chi)** to **[Gin](https://github.com/gin-gonic/gin)** to facilitate this. This model also includes a query pool for backing out of long transactions such as deleting a post or user with multiple queries.
