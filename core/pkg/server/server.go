@@ -23,6 +23,20 @@ func NewServer(store *db.Store) *Server {
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, "What's good, dawg!?")
 	})
+
+	/*
+	#####################
+	## Comment Actions ##
+	#####################
+	*/
+	router.POST("/comment/GetCommentPost", server.getCommentsForPost)
+	router.POST("/comment/GetReplyComment", server.getRepliesForComment)
+	router.POST("/comment/CreateComment", server.createComment)
+	router.POST("/comment/CreateReply", server.createReply)
+	router.PUT("/comment/EditComment", server.updateComment)
+	router.PUT("/comment/EditReply", server.updateReply)
+	router.DELETE("/comment/DeleteComment", server.deleteComment)
+	router.DELETE("/comment/DeleteReply", server.deleteReply)
 	
 	server.router = router
 	return server

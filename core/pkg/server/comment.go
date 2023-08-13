@@ -197,13 +197,13 @@ if err != nil {
 ctx.JSON(http.StatusOK, replies)
 }
 
-type updateCommentArgs struct {
+type updateResponseArgs struct {
 	ID      int64  `json:"id" binding:"required"`
 	Content string `json:"content" binding:"required"`
 }
 
 func (server *Server) updateComment(ctx *gin.Context) {
-	var req updateCommentArgs
+	var req updateResponseArgs
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -223,13 +223,8 @@ func (server *Server) updateComment(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, update)
 }
 
-type updateReplyArgs struct {
-	ID      int64  `json:"id" binding:"required"`
-	Content string `json:"content" binding:"required"`
-}
-
 func (server *Server) updateReply(ctx *gin.Context) {
-	var req updateReplyArgs
+	var req updateResponseArgs
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -247,4 +242,44 @@ func (server *Server) updateReply(ctx *gin.Context) {
 	}
 	
 	ctx.JSON(http.StatusOK, update)
+}
+
+type deleteSingleArg struct {
+	ID      int64  `json:"id" binding:"required"`
+}
+
+func (server *Server) deleteComment(ctx *gin.Context) {
+	var req deleteSingleArg
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	arg := req.ID
+
+	err := server.store.DeleteComment(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	
+	ctx.JSON(http.StatusOK, "Comment Deleted")
+}
+
+func (server *Server) deleteReply(ctx *gin.Context) {
+	var req deleteSingleArg
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	arg := req.ID
+
+	err := server.store.DeleteReply(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	
+	ctx.JSON(http.StatusOK, "Reply Deleted")
 }

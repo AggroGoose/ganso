@@ -34,7 +34,7 @@ CREATE TABLE "replies" (
 
 CREATE TABLE "posts" (
   "id" text PRIMARY KEY,
-  "slug" varchar UNIQUE NOT NULL,
+  "slug" varchar UNIQUE,
   "audio_url" text
 );
 
@@ -61,22 +61,22 @@ CREATE TABLE "user_permissions" (
 
 CREATE INDEX ON "posts" ("slug");
 
-ALTER TABLE "comments" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "comments" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "comments" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("id");
+ALTER TABLE "comments" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "replies" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "replies" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "replies" ADD FOREIGN KEY ("comment_id") REFERENCES "comments" ("id");
+ALTER TABLE "replies" ADD FOREIGN KEY ("comment_id") REFERENCES "comments" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "post_likes" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "post_likes" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "post_likes" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("id");
+ALTER TABLE "post_likes" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "post_saves" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "post_saves" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "post_saves" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("id");
+ALTER TABLE "post_saves" ADD FOREIGN KEY ("post_id") REFERENCES "posts" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "user_permissions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "user_permissions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
-ALTER TABLE "user_permissions" ADD FOREIGN KEY ("permission_id") REFERENCES "permissions" ("id");
+ALTER TABLE "user_permissions" ADD FOREIGN KEY ("permission_id") REFERENCES "permissions" ("id") ON DELETE CASCADE;

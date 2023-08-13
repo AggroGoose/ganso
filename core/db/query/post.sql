@@ -1,8 +1,7 @@
 -- name: CreatePost :one
 INSERT INTO posts (
-    id,
-    slug
-) VALUES ($1, $2) RETURNING *;
+    id
+) VALUES ($1) RETURNING *;
 
 -- name: UpdatePostAudio :one
 UPDATE posts
@@ -36,22 +35,30 @@ INSERT INTO post_saves (
     post_id
 ) VALUES($1, $2) RETURNING *;
 
--- name: RemoveUserSave :exec
+-- name: GetUserSaves :many
+SELECT * FROM post_saves
+WHERE user_id = $1
+ORDER BY created_at
+LIMIT $2
+OFFSET $3;
+
+-- name: GetPostLike :one
+SELECT * FROM post_saves
+WHERE user_id = $1 AND post_id = $2;
+
+-- name: GetPostSave :one
+SELECT * FROM post_saves
+WHERE user_id = $1 AND post_id = $2;
+
+-- name: RemoveSavePost :exec
 DELETE FROM post_saves AS p 
 WHERE p.user_id = $1 AND p.post_id = $2;
 
--- name: RemoveUserLike :exec
-DELETE FROM post_likes AS p 
-WHERE p.user_id = $1 AND p.post_id = $2;
+-- name: DeletePost :exec
+DELETE FROM posts WHERE id = $1;
 
 -- name: RemoveAllUserLikes :exec
-DELETE FROM post_likes AS p WHERE p.user_id = $1;
-
--- name: RemoveAllPostLikes :exec
-DELETE FROM post_likes AS p WHERE p.post_id = $1;
+DELETE FROM post_likes WHERE user_id = $1;
 
 -- name: RemoveAllUserSaves :exec
-DELETE FROM post_saves AS p WHERE p.user_id = $1;
-
--- name: RemoveAllPostSaves :exec
-DELETE FROM post_saves AS p WHERE p.post_id = $1;
+DELETE FROM post_saves WHERE user_id = $1;

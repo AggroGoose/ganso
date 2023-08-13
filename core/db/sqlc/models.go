@@ -26,7 +26,7 @@ type Permission struct {
 
 type Post struct {
 	ID       string         `json:"id"`
-	Slug     string         `json:"slug"`
+	Slug     sql.NullString `json:"slug"`
 	AudioUrl sql.NullString `json:"audio_url"`
 }
 

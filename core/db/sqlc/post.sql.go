@@ -12,21 +12,24 @@ import (
 
 const createPost = `-- name: CreatePost :one
 INSERT INTO posts (
-    id,
-    slug
-) VALUES ($1, $2) RETURNING id, slug, audio_url
+    id
+) VALUES ($1) RETURNING id, slug, audio_url
 `
 
-type CreatePostParams struct {
-	ID   string `json:"id"`
-	Slug string `json:"slug"`
-}
-
-func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, error) {
-	row := q.db.QueryRowContext(ctx, createPost, arg.ID, arg.Slug)
+func (q *Queries) CreatePost(ctx context.Context, id string) (Post, error) {
+	row := q.db.QueryRowContext(ctx, createPost, id)
 	var i Post
 	err := row.Scan(&i.ID, &i.Slug, &i.AudioUrl)
 	return i, err
+}
+
+const deletePost = `-- name: DeletePost :exec
+DELETE FROM posts WHERE id = $1
+`
+
+func (q *Queries) DeletePost(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deletePost, id)
+	return err
 }
 
 const getPost = `-- name: GetPost :one
@@ -39,6 +42,77 @@ func (q *Queries) GetPost(ctx context.Context, id string) (Post, error) {
 	var i Post
 	err := row.Scan(&i.ID, &i.Slug, &i.AudioUrl)
 	return i, err
+}
+
+const getPostLike = `-- name: GetPostLike :one
+SELECT user_id, post_id, created_at FROM post_saves
+WHERE user_id = $1 AND post_id = $2
+`
+
+type GetPostLikeParams struct {
+	UserID string `json:"user_id"`
+	PostID string `json:"post_id"`
+}
+
+func (q *Queries) GetPostLike(ctx context.Context, arg GetPostLikeParams) (PostSafe, error) {
+	row := q.db.QueryRowContext(ctx, getPostLike, arg.UserID, arg.PostID)
+	var i PostSafe
+	err := row.Scan(&i.UserID, &i.PostID, &i.CreatedAt)
+	return i, err
+}
+
+const getPostSave = `-- name: GetPostSave :one
+SELECT user_id, post_id, created_at FROM post_saves
+WHERE user_id = $1 AND post_id = $2
+`
+
+type GetPostSaveParams struct {
+	UserID string `json:"user_id"`
+	PostID string `json:"post_id"`
+}
+
+func (q *Queries) GetPostSave(ctx context.Context, arg GetPostSaveParams) (PostSafe, error) {
+	row := q.db.QueryRowContext(ctx, getPostSave, arg.UserID, arg.PostID)
+	var i PostSafe
+	err := row.Scan(&i.UserID, &i.PostID, &i.CreatedAt)
+	return i, err
+}
+
+const getUserSaves = `-- name: GetUserSaves :many
+SELECT user_id, post_id, created_at FROM post_saves
+WHERE user_id = $1
+ORDER BY created_at
+LIMIT $2
+OFFSET $3
+`
+
+type GetUserSavesParams struct {
+	UserID string `json:"user_id"`
+	Limit  int32  `json:"limit"`
+	Offset int32  `json:"offset"`
+}
+
+func (q *Queries) GetUserSaves(ctx context.Context, arg GetUserSavesParams) ([]PostSafe, error) {
+	rows, err := q.db.QueryContext(ctx, getUserSaves, arg.UserID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PostSafe{}
+	for rows.Next() {
+		var i PostSafe
+		if err := rows.Scan(&i.UserID, &i.PostID, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const likePost = `-- name: LikePost :one
@@ -95,26 +169,8 @@ func (q *Queries) ListPosts(ctx context.Context, arg ListPostsParams) ([]Post, e
 	return items, nil
 }
 
-const removeAllPostLikes = `-- name: RemoveAllPostLikes :exec
-DELETE FROM post_likes AS p WHERE p.post_id = $1
-`
-
-func (q *Queries) RemoveAllPostLikes(ctx context.Context, postID string) error {
-	_, err := q.db.ExecContext(ctx, removeAllPostLikes, postID)
-	return err
-}
-
-const removeAllPostSaves = `-- name: RemoveAllPostSaves :exec
-DELETE FROM post_saves AS p WHERE p.post_id = $1
-`
-
-func (q *Queries) RemoveAllPostSaves(ctx context.Context, postID string) error {
-	_, err := q.db.ExecContext(ctx, removeAllPostSaves, postID)
-	return err
-}
-
 const removeAllUserLikes = `-- name: RemoveAllUserLikes :exec
-DELETE FROM post_likes AS p WHERE p.user_id = $1
+DELETE FROM post_likes WHERE user_id = $1
 `
 
 func (q *Queries) RemoveAllUserLikes(ctx context.Context, userID string) error {
@@ -123,7 +179,7 @@ func (q *Queries) RemoveAllUserLikes(ctx context.Context, userID string) error {
 }
 
 const removeAllUserSaves = `-- name: RemoveAllUserSaves :exec
-DELETE FROM post_saves AS p WHERE p.user_id = $1
+DELETE FROM post_saves WHERE user_id = $1
 `
 
 func (q *Queries) RemoveAllUserSaves(ctx context.Context, userID string) error {
@@ -146,33 +202,18 @@ func (q *Queries) RemoveLikePost(ctx context.Context, arg RemoveLikePostParams) 
 	return err
 }
 
-const removeUserLike = `-- name: RemoveUserLike :exec
-DELETE FROM post_likes AS p 
-WHERE p.user_id = $1 AND p.post_id = $2
-`
-
-type RemoveUserLikeParams struct {
-	UserID string `json:"user_id"`
-	PostID string `json:"post_id"`
-}
-
-func (q *Queries) RemoveUserLike(ctx context.Context, arg RemoveUserLikeParams) error {
-	_, err := q.db.ExecContext(ctx, removeUserLike, arg.UserID, arg.PostID)
-	return err
-}
-
-const removeUserSave = `-- name: RemoveUserSave :exec
+const removeSavePost = `-- name: RemoveSavePost :exec
 DELETE FROM post_saves AS p 
 WHERE p.user_id = $1 AND p.post_id = $2
 `
 
-type RemoveUserSaveParams struct {
+type RemoveSavePostParams struct {
 	UserID string `json:"user_id"`
 	PostID string `json:"post_id"`
 }
 
-func (q *Queries) RemoveUserSave(ctx context.Context, arg RemoveUserSaveParams) error {
-	_, err := q.db.ExecContext(ctx, removeUserSave, arg.UserID, arg.PostID)
+func (q *Queries) RemoveSavePost(ctx context.Context, arg RemoveSavePostParams) error {
+	_, err := q.db.ExecContext(ctx, removeSavePost, arg.UserID, arg.PostID)
 	return err
 }
 
