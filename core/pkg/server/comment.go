@@ -42,7 +42,7 @@ type replyResponse struct {
 
 func (server *Server) createComment(ctx *gin.Context) {
 	var req createCommentRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -71,7 +71,7 @@ func (server *Server) createComment(ctx *gin.Context) {
 
 func (server *Server) createReply(ctx *gin.Context) {
 	var req createReplyRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -116,7 +116,7 @@ type ReturnComment struct {
 
 func (server *Server) getCommentsForPost(ctx *gin.Context) {
 var req commentsForPost
-if err := ctx.ShouldBindQuery(&req); err != nil {
+if err := ctx.ShouldBindJSON(&req); err != nil {
 	ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	return
 }
@@ -177,7 +177,7 @@ type repliesForPost struct {
 }
 func (server *Server) getRepliesForComment(ctx *gin.Context) {
 	var req repliesForPost
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -204,7 +204,7 @@ type updateResponseArgs struct {
 
 func (server *Server) updateComment(ctx *gin.Context) {
 	var req updateResponseArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -225,7 +225,7 @@ func (server *Server) updateComment(ctx *gin.Context) {
 
 func (server *Server) updateReply(ctx *gin.Context) {
 	var req updateResponseArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -250,7 +250,7 @@ type deleteSingleArg struct {
 
 func (server *Server) deleteComment(ctx *gin.Context) {
 	var req deleteSingleArg
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -268,7 +268,7 @@ func (server *Server) deleteComment(ctx *gin.Context) {
 
 func (server *Server) deleteReply(ctx *gin.Context) {
 	var req deleteSingleArg
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}

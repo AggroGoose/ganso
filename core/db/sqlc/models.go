@@ -53,7 +53,8 @@ type Reply struct {
 
 type User struct {
 	ID          string         `json:"id"`
-	Active      bool           `json:"active"`
+	Verified    bool           `json:"verified"`
+	Banned      bool           `json:"banned"`
 	Username    sql.NullString `json:"username"`
 	Image       sql.NullString `json:"image"`
 	Url         sql.NullString `json:"url"`

@@ -3,16 +3,23 @@ package server
 import (
 	"database/sql"
 	db "ganso-core/db/sqlc"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 )
 
 type getCreateDeletePostArg struct {
 	ID string `uri:"id" binding:"required"`
 }
 
+type ReturnPost struct {
+	ID       string         `json:"id"`
+	Slug     sql.NullString `json:"slug"`
+	AudioUrl sql.NullString `json:"audio_url"`
+	CommentCount int64 `json:"comment_count"`
+	LikeCount int64 `json:"like_count"`
+}
 func (server *Server) getOrCreatePost(ctx *gin.Context) {
 	var req getCreateDeletePostArg
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -26,15 +33,16 @@ func (server *Server) getOrCreatePost(ctx *gin.Context) {
 	post, err := server.store.GetPost(ctx, arg)
 
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code.Name() != "no_data" && pqErr.Code.Name() != "no_data_found" {
-				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-				return
-			} else {
-				noPost = true
-			}
+		if err == sql.ErrNoRows {
+			noPost = true
+		} else {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
 		}
 	}
+
+	likeCount := int64(0)
+	commentCount := int64(0)
 
 	if noPost {
 		post, err = server.store.CreatePost(ctx, arg)
@@ -42,8 +50,22 @@ func (server *Server) getOrCreatePost(ctx *gin.Context) {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
+	} else {
+		likes, err := server.store.PostLikeCount(ctx, arg)
+		if err == nil {likeCount = likes}
+		comments, err := server.store.CommentCount(ctx, arg)
+		if err == nil {commentCount = comments}
 	}
-	ctx.JSON(http.StatusOK, post)
+
+	returnPost := ReturnPost{
+		ID: post.ID,
+		Slug: post.Slug,
+		AudioUrl: post.AudioUrl,
+		LikeCount: likeCount,
+		CommentCount: commentCount,
+	}
+
+	ctx.JSON(http.StatusOK, returnPost)
 }
 
 func (server *Server) deletePost(ctx *gin.Context) {
@@ -66,19 +88,19 @@ func (server *Server) deletePost(ctx *gin.Context) {
 
 type updatePostAudioArg struct {
 	ID       string         `json:"id" binding:"required"`
-	AudioUrl sql.NullString `json:"audio_url" binding:"required"`
+	AudioUrl string `json:"audio_url" binding:"required"`
 }
 
 func (server *Server) updatePostAudio(ctx *gin.Context) {
 	var req updatePostAudioArg
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
 	arg := db.UpdatePostAudioParams{
 		ID: req.ID,
-		AudioUrl: req.AudioUrl,
+		AudioUrl: sql.NullString{String: req.AudioUrl, Valid: true},
 	}
 
 	post, err := server.store.UpdatePostAudio(ctx, arg)
@@ -97,7 +119,7 @@ type likeSaveArgs struct {
 
 func (server *Server) likeSaveState(ctx *gin.Context) {
 	var req likeSaveArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -112,18 +134,30 @@ func (server *Server) likeSaveState(ctx *gin.Context) {
 		PostID: req.PostID,
 	}
 
-	_, err := server.store.GetPostLike(ctx, arg)
-	if err == nil {
-		state["isLiked"] = true
+	log.Println("LikeStateArgs", arg)
+
+	liked, err := server.store.GetPostLike(ctx, arg)
+	if err != nil {
+		log.Println("GetLikeError", err)
 	}
+
+	log.Println("Liked:", liked)
 
 	arg2 := db.GetPostSaveParams{
 		UserID: req.UserID,
 		PostID: req.PostID,
 	}
 
-	_, err = server.store.GetPostSave(ctx, arg2)
-	if err == nil {
+	saved, err := server.store.GetPostSave(ctx, arg2)
+	if err != nil {
+		log.Println("GetSaveError", err)
+	} 
+
+	if len(liked) > 0 {
+		state["isLiked"] = true
+	}
+
+	if len(saved) > 0 {
 		state["isSaved"] = true
 	}
 
@@ -132,7 +166,7 @@ func (server *Server) likeSaveState(ctx *gin.Context) {
 
 func (server *Server) likePost(ctx *gin.Context) {
 	var req likeSaveArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -153,7 +187,7 @@ func (server *Server) likePost(ctx *gin.Context) {
 
 func (server *Server) unlikePost(ctx *gin.Context) {
 	var req likeSaveArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -174,7 +208,7 @@ func (server *Server) unlikePost(ctx *gin.Context) {
 
 func (server *Server) savePost(ctx *gin.Context) {
 	var req likeSaveArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -195,7 +229,7 @@ func (server *Server) savePost(ctx *gin.Context) {
 
 func (server *Server) removeSavePost(ctx *gin.Context) {
 	var req likeSaveArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
@@ -222,7 +256,7 @@ type userSavedArgs struct{
 
 func (server *Server) getUserSavedPosts(ctx *gin.Context) {
 	var req userSavedArgs
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}

@@ -42,11 +42,11 @@ ORDER BY created_at
 LIMIT $2
 OFFSET $3;
 
--- name: GetPostLike :one
-SELECT * FROM post_saves
+-- name: GetPostLike :many
+SELECT * FROM post_likes
 WHERE user_id = $1 AND post_id = $2;
 
--- name: GetPostSave :one
+-- name: GetPostSave :many
 SELECT * FROM post_saves
 WHERE user_id = $1 AND post_id = $2;
 
@@ -62,3 +62,9 @@ DELETE FROM post_likes WHERE user_id = $1;
 
 -- name: RemoveAllUserSaves :exec
 DELETE FROM post_saves WHERE user_id = $1;
+
+-- name: PostLikeCount :one
+SELECT COUNT(*) FROM post_likes WHERE post_id = $1;
+
+-- name: PostSaveCount :one
+SELECT COUNT(*) FROM post_saves WHERE post_id = $1;

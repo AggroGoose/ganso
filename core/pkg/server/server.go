@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	db "ganso-core/db/sqlc"
@@ -23,7 +22,29 @@ func NewServer(store *db.Store) *Server {
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, "What's good, dawg!?")
 	})
-
+	/*
+	##################
+	## Post Actions ##
+	##################
+	*/
+	router.POST("/post/GetorCreate/:id", server.getOrCreatePost)
+	router.POST("/post/LikeSaveState", server.likeSaveState)
+	router.POST("/post/LikePost", server.likePost)
+	router.POST("/post/SavePost", server.savePost)
+	router.POST("/post/GetSavedPosts", server.getUserSavedPosts)
+	router.PUT("/post/UpdateAudio", server.updatePostAudio)
+	router.DELETE("/post/UnlikePost", server.unlikePost)
+	router.DELETE("/post/RemoveSavePost", server.removeSavePost)
+	/*
+	##################
+	## User Actions ##
+	##################
+	*/
+	router.POST("/user/GetorCreate/:id", server.getOrCreateUser)
+	router.PUT("/user/IntakeComplete", server.userCompleteIntake)
+	router.PUT("/user/UpdateUsername", server.updateUsername)
+	router.PUT("/user/UpdateUserImage", server.updateUserImage)
+	router.DELETE("/user/DeleteUser/:id", server.deleteUser)
 	/*
 	#####################
 	## Comment Actions ##
@@ -40,29 +61,6 @@ func NewServer(store *db.Store) *Server {
 	
 	server.router = router
 	return server
-}
-
-func writeJSON(w http.ResponseWriter, status int, data any, headers ...http.Header) error {
-	out, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	if len(headers) > 0 {
-		for key, value := range headers[0] {
-			w.Header()[key] = value
-		}
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
-	_, err = w.Write(out)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (server *Server) Start(address string) error {

@@ -12,6 +12,9 @@ INSERT INTO replies (
     content
 ) VALUES ($1, $2, $3) RETURNING *;
 
+-- name: CommentCount :one
+SELECT COUNT(*) FROM comments WHERE post_id = $1;
+
 -- name: UpdateComment :one
 UPDATE comments
 SET content = $2, edited = 'true'

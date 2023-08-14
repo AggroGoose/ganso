@@ -44,8 +44,8 @@ func (q *Queries) GetPost(ctx context.Context, id string) (Post, error) {
 	return i, err
 }
 
-const getPostLike = `-- name: GetPostLike :one
-SELECT user_id, post_id, created_at FROM post_saves
+const getPostLike = `-- name: GetPostLike :many
+SELECT user_id, post_id, created_at FROM post_likes
 WHERE user_id = $1 AND post_id = $2
 `
 
@@ -54,14 +54,30 @@ type GetPostLikeParams struct {
 	PostID string `json:"post_id"`
 }
 
-func (q *Queries) GetPostLike(ctx context.Context, arg GetPostLikeParams) (PostSafe, error) {
-	row := q.db.QueryRowContext(ctx, getPostLike, arg.UserID, arg.PostID)
-	var i PostSafe
-	err := row.Scan(&i.UserID, &i.PostID, &i.CreatedAt)
-	return i, err
+func (q *Queries) GetPostLike(ctx context.Context, arg GetPostLikeParams) ([]PostLike, error) {
+	rows, err := q.db.QueryContext(ctx, getPostLike, arg.UserID, arg.PostID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PostLike{}
+	for rows.Next() {
+		var i PostLike
+		if err := rows.Scan(&i.UserID, &i.PostID, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-const getPostSave = `-- name: GetPostSave :one
+const getPostSave = `-- name: GetPostSave :many
 SELECT user_id, post_id, created_at FROM post_saves
 WHERE user_id = $1 AND post_id = $2
 `
@@ -71,11 +87,27 @@ type GetPostSaveParams struct {
 	PostID string `json:"post_id"`
 }
 
-func (q *Queries) GetPostSave(ctx context.Context, arg GetPostSaveParams) (PostSafe, error) {
-	row := q.db.QueryRowContext(ctx, getPostSave, arg.UserID, arg.PostID)
-	var i PostSafe
-	err := row.Scan(&i.UserID, &i.PostID, &i.CreatedAt)
-	return i, err
+func (q *Queries) GetPostSave(ctx context.Context, arg GetPostSaveParams) ([]PostSafe, error) {
+	rows, err := q.db.QueryContext(ctx, getPostSave, arg.UserID, arg.PostID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PostSafe{}
+	for rows.Next() {
+		var i PostSafe
+		if err := rows.Scan(&i.UserID, &i.PostID, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserSaves = `-- name: GetUserSaves :many
@@ -167,6 +199,28 @@ func (q *Queries) ListPosts(ctx context.Context, arg ListPostsParams) ([]Post, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const postLikeCount = `-- name: PostLikeCount :one
+SELECT COUNT(*) FROM post_likes WHERE post_id = $1
+`
+
+func (q *Queries) PostLikeCount(ctx context.Context, postID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, postLikeCount, postID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const postSaveCount = `-- name: PostSaveCount :one
+SELECT COUNT(*) FROM post_saves WHERE post_id = $1
+`
+
+func (q *Queries) PostSaveCount(ctx context.Context, postID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, postSaveCount, postID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const removeAllUserLikes = `-- name: RemoveAllUserLikes :exec

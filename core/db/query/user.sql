@@ -20,7 +20,7 @@ OFFSET $2;
 
 -- name: UpdateUserIntake :one
 UPDATE users
-SET username = $2, image = $3, active = 'true'
+SET username = $2, image = $3, verified = 'true'
 WHERE id = $1
 RETURNING *;
 

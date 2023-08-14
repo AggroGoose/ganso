@@ -32,7 +32,7 @@ func (q *Queries) AddUserPermission(ctx context.Context, arg AddUserPermissionPa
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
     id
-) VALUES ($1) RETURNING id, active, username, image, url, url_verified, created_at
+) VALUES ($1) RETURNING id, verified, banned, username, image, url, url_verified, created_at
 `
 
 func (q *Queries) CreateUser(ctx context.Context, id string) (User, error) {
@@ -40,7 +40,8 @@ func (q *Queries) CreateUser(ctx context.Context, id string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Active,
+		&i.Verified,
+		&i.Banned,
 		&i.Username,
 		&i.Image,
 		&i.Url,
@@ -60,7 +61,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, active, username, image, url, url_verified, created_at FROM users
+SELECT id, verified, banned, username, image, url, url_verified, created_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -69,7 +70,8 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Active,
+		&i.Verified,
+		&i.Banned,
 		&i.Username,
 		&i.Image,
 		&i.Url,
@@ -80,7 +82,7 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 }
 
 const getUserForUpdate = `-- name: GetUserForUpdate :one
-SELECT id, active, username, image, url, url_verified, created_at FROM users 
+SELECT id, verified, banned, username, image, url, url_verified, created_at FROM users 
 WHERE id = $1 LIMIT 1
 FOR NO KEY UPDATE
 `
@@ -90,7 +92,8 @@ func (q *Queries) GetUserForUpdate(ctx context.Context, id string) (User, error)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Active,
+		&i.Verified,
+		&i.Banned,
 		&i.Username,
 		&i.Image,
 		&i.Url,
@@ -101,7 +104,7 @@ func (q *Queries) GetUserForUpdate(ctx context.Context, id string) (User, error)
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, active, username, image, url, url_verified, created_at FROM users
+SELECT id, verified, banned, username, image, url, url_verified, created_at FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -123,7 +126,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.Active,
+			&i.Verified,
+			&i.Banned,
 			&i.Username,
 			&i.Image,
 			&i.Url,
@@ -180,7 +184,7 @@ const updateUserImage = `-- name: UpdateUserImage :one
 UPDATE users
 SET image = $2
 WHERE id = $1
-RETURNING id, active, username, image, url, url_verified, created_at
+RETURNING id, verified, banned, username, image, url, url_verified, created_at
 `
 
 type UpdateUserImageParams struct {
@@ -193,7 +197,8 @@ func (q *Queries) UpdateUserImage(ctx context.Context, arg UpdateUserImageParams
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Active,
+		&i.Verified,
+		&i.Banned,
 		&i.Username,
 		&i.Image,
 		&i.Url,
@@ -205,9 +210,9 @@ func (q *Queries) UpdateUserImage(ctx context.Context, arg UpdateUserImageParams
 
 const updateUserIntake = `-- name: UpdateUserIntake :one
 UPDATE users
-SET username = $2, image = $3, active = 'true'
+SET username = $2, image = $3, verified = 'true'
 WHERE id = $1
-RETURNING id, active, username, image, url, url_verified, created_at
+RETURNING id, verified, banned, username, image, url, url_verified, created_at
 `
 
 type UpdateUserIntakeParams struct {
@@ -221,7 +226,8 @@ func (q *Queries) UpdateUserIntake(ctx context.Context, arg UpdateUserIntakePara
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Active,
+		&i.Verified,
+		&i.Banned,
 		&i.Username,
 		&i.Image,
 		&i.Url,
@@ -235,7 +241,7 @@ const updateUserName = `-- name: UpdateUserName :one
 UPDATE users
 SET username = $2
 WHERE id = $1
-RETURNING id, active, username, image, url, url_verified, created_at
+RETURNING id, verified, banned, username, image, url, url_verified, created_at
 `
 
 type UpdateUserNameParams struct {
@@ -248,7 +254,8 @@ func (q *Queries) UpdateUserName(ctx context.Context, arg UpdateUserNameParams) 
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Active,
+		&i.Verified,
+		&i.Banned,
 		&i.Username,
 		&i.Image,
 		&i.Url,

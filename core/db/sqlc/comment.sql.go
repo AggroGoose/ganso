@@ -11,6 +11,17 @@ import (
 	"time"
 )
 
+const commentCount = `-- name: CommentCount :one
+SELECT COUNT(*) FROM comments WHERE post_id = $1
+`
+
+func (q *Queries) CommentCount(ctx context.Context, postID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, commentCount, postID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createComment = `-- name: CreateComment :one
 INSERT INTO comments (
     user_id,

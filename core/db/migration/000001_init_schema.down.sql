@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS replies;
+DROP TABLE IF EXISTS permissions;
+DROP TABLE IF EXISTS post_likes;
+DROP TABLE IF EXISTS post_saves;
+DROP TABLE IF EXISTS user_permissions;
