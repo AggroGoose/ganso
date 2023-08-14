@@ -149,7 +149,7 @@ for i:=0;i<len(comments);i++ {
 	totalReplies := 0
 
 	replies, _ := server.store.GetRepliesForComment(ctx, arg)
-	if replies != nil {
+	if len(replies) > 0 {
 		commentReplies = append(commentReplies, replies...) 
 		totalReplies = int(replies[0].FullCount)
 	}
