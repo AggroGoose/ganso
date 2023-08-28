@@ -100,7 +100,7 @@ func (server *Server) createReply(ctx *gin.Context) {
 
 type commentsForPost struct {
 	PostID string `json:"post_id" binding:"required"`
-	Limit  int32  `json:"limit" binding:"required,max=10"`
+	Limit  int32  `json:"limit" binding:"required,max=15"`
 	PageNum int32  `json:"page_num" binding:"required,min=1"`
 }
 
@@ -110,8 +110,7 @@ type ReturnComment struct {
 	Image    sql.NullString `json:"image"`
 	Content  string         `json:"content"`
 	DateTime time.Time      `json:"date_time"`
-	CountReply int	`json:"count_reply"`
-	Replies []db.GetRepliesForCommentRow `json:"replies"`
+	CountReply int64	`json:"count_reply"`
 }
 
 func (server *Server) getCommentsForPost(ctx *gin.Context) {
@@ -139,20 +138,10 @@ resComments := make([]ReturnComment, len(comments))
 for i:=0;i<len(comments);i++ {
 	c := comments[i]
 
-	arg := db.GetRepliesForCommentParams {
-		CommentID: c.ID,
-		Limit: 3,
-		Offset: 0,
-	}
-
-	commentReplies := make([]db.GetRepliesForCommentRow, 0)
-	totalReplies := 0
-
-	replies, _ := server.store.GetRepliesForComment(ctx, arg)
-	if len(replies) > 0 {
-		commentReplies = append(commentReplies, replies...) 
-		totalReplies = int(replies[0].FullCount)
-	}
+    replyCount, err := server.store.ReplyCount(ctx, c.ID)
+    if err != nil {
+        replyCount = 0
+    }
 
 	fullComment := ReturnComment {
 		ID: c.ID,
@@ -160,8 +149,7 @@ for i:=0;i<len(comments);i++ {
 		Image: c.Image,
 		Content: c.Content,
 		DateTime: c.DateTime,
-		CountReply: totalReplies,
-		Replies: commentReplies,
+		CountReply: replyCount,
 	}
 
 	resComments[i] = fullComment

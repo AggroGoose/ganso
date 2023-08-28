@@ -15,6 +15,9 @@ INSERT INTO replies (
 -- name: CommentCount :one
 SELECT COUNT(*) FROM comments WHERE post_id = $1;
 
+-- name: ReplyCount :one
+SELECT COUNT(*) FROM replies WHERE comment_id = $1;
+
 -- name: UpdateComment :one
 UPDATE comments
 SET content = $2, edited = 'true'

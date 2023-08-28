@@ -242,6 +242,17 @@ func (q *Queries) GetRepliesForComment(ctx context.Context, arg GetRepliesForCom
 	return items, nil
 }
 
+const replyCount = `-- name: ReplyCount :one
+SELECT COUNT(*) FROM replies WHERE comment_id = $1
+`
+
+func (q *Queries) ReplyCount(ctx context.Context, commentID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, replyCount, commentID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updateComment = `-- name: UpdateComment :one
 UPDATE comments
 SET content = $2, edited = 'true'

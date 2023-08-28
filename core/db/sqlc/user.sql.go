@@ -29,6 +29,17 @@ func (q *Queries) AddUserPermission(ctx context.Context, arg AddUserPermissionPa
 	return i, err
 }
 
+const checkUsername = `-- name: CheckUsername :one
+SELECT username FROM users
+WHERE username = $1
+`
+
+func (q *Queries) CheckUsername(ctx context.Context, username sql.NullString) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, checkUsername, username)
+	err := row.Scan(&username)
+	return username, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
     id

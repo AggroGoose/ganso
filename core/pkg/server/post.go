@@ -176,6 +176,8 @@ func (server *Server) likePost(ctx *gin.Context) {
 		PostID: req.PostID,
 	}
 
+    log.Println("User:",req.UserID)
+
 	like, err := server.store.LikePost(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))

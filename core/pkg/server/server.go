@@ -2,9 +2,11 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	db "ganso-core/db/sqlc"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,6 +18,15 @@ type Server struct {
 func NewServer(store *db.Store) *Server {
 	server := &Server{store: store}
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge: 12 * time.Hour,
+	  }))
 
 	
 
@@ -40,6 +51,7 @@ func NewServer(store *db.Store) *Server {
 	## User Actions ##
 	##################
 	*/
+	router.GET("/user/CheckUsername/:username", server.checkUsername)
 	router.POST("/user/GetorCreate/:id", server.getOrCreateUser)
 	router.PUT("/user/IntakeComplete", server.userCompleteIntake)
 	router.PUT("/user/UpdateUsername", server.updateUsername)

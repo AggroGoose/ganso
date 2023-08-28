@@ -21,8 +21,6 @@ func (server *Server) getOrCreateUser(ctx *gin.Context) {
 		return
 	}
 
-	log.Println("Here is the user ID:",req.ID)
-
 	arg := req.ID
 
 	noUser := false
@@ -142,4 +140,34 @@ func (server *Server) updateUserImage(ctx *gin.Context) {
 	}
 	
 	ctx.JSON(http.StatusOK, user)
+}
+
+type usernameArg struct {
+	Username string `uri:"username" binding:"required"`
+}
+
+func (server *Server) checkUsername(ctx *gin.Context) {
+	var req usernameArg
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	log.Println("Username is:", req.Username)
+
+	arg := sql.NullString{
+		String: req.Username,
+		Valid: true,
+	}
+	isUsed := true
+
+	_, err := server.store.CheckUsername(ctx, arg)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			isUsed = false
+		} else {
+			log.Println("Undefined error checking username:", err)
+		}
+	}
+	ctx.JSON(http.StatusOK, map[string]bool{ "isUsed": isUsed })
 }

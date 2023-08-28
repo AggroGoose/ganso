@@ -12,6 +12,10 @@ SELECT * FROM users
 WHERE id = $1 LIMIT 1
 FOR NO KEY UPDATE;
 
+-- name: CheckUsername :one
+SELECT username FROM users
+WHERE username = $1;
+
 -- name: ListUsers :many
 SELECT * FROM users
 ORDER BY id
